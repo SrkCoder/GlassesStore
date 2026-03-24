@@ -6,12 +6,12 @@ function AddProduct() {
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      // Upload image
       const formData = new FormData();
       formData.append("image", file);
 
@@ -20,7 +20,6 @@ function AddProduct() {
         formData
       );
 
-      // Save product
       await axios.post("http://localhost:5000/add-glass", {
         name,
         price,
@@ -29,42 +28,105 @@ function AddProduct() {
       });
 
       alert("Product added successfully!");
+
+      // Reset form
+      setName("");
+      setPrice("");
+      setDescription("");
+      setFile(null);
+      setPreview(null);
+
     } catch (err) {
       console.log(err);
     }
   };
 
+  const handleImageChange = (e) => {
+    const selected = e.target.files[0];
+    setFile(selected);
+
+    if (selected) {
+      setPreview(URL.createObjectURL(selected));
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="p-10 space-y-4">
-      <input
-        type="text"
-        placeholder="Name"
-        className="border p-2 w-full"
-        onChange={(e) => setName(e.target.value)}
-      />
+    <div className="min-h-screen bg-black text-white flex justify-center items-center px-4">
 
-      <input
-        type="text"
-        placeholder="Price"
-        className="border p-2 w-full"
-        onChange={(e) => setPrice(e.target.value)}
-      />
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-lg bg-white/5 border border-white/10 rounded-2xl p-8 shadow-xl space-y-6"
+      >
 
-      <textarea
-        placeholder="Description"
-        className="border p-2 w-full"
-        onChange={(e) => setDescription(e.target.value)}
-      />
+        <h2 className="text-2xl font-bold text-center mb-4">
+          Add New Glasses 🕶️
+        </h2>
 
-      <input
-        type="file"
-        onChange={(e) => setFile(e.target.files[0])}
-      />
+        {/* NAME */}
+        <input
+          type="text"
+          placeholder="Product Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full p-3 rounded-lg bg-black border border-white/20 focus:border-blue-500 outline-none"
+          required
+        />
 
-      <button className="bg-green-500 text-white px-4 py-2">
-        Add Product
-      </button>
-    </form>
+        {/* PRICE */}
+        <input
+          type="number"
+          placeholder="Price"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          className="w-full p-3 rounded-lg bg-black border border-white/20 focus:border-blue-500 outline-none"
+          required
+        />
+
+        {/* DESCRIPTION */}
+        <textarea
+          placeholder="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="w-full p-3 rounded-lg bg-black border border-white/20 focus:border-blue-500 outline-none"
+          rows="4"
+          required
+        />
+
+        {/* IMAGE INPUT */}
+        <div>
+          <label className="block mb-2 text-sm text-gray-400">
+            Upload Image
+          </label>
+
+          <input
+            type="file"
+            onChange={handleImageChange}
+            className="w-full text-sm text-gray-300"
+            required
+          />
+        </div>
+
+        {/* IMAGE PREVIEW */}
+        {preview && (
+          <div className="mt-4">
+            <img
+              src={preview}
+              alt="preview"
+              className="w-full h-48 object-cover rounded-lg border border-white/10"
+            />
+          </div>
+        )}
+
+        {/* BUTTON */}
+        <button
+          type="submit"
+          className="w-full bg-green-500 hover:bg-green-600 py-3 rounded-lg font-semibold transition transform hover:scale-105"
+        >
+          Add Product
+        </button>
+
+      </form>
+    </div>
   );
 }
 
