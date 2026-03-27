@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 function Products() {
   const [glasses, setGlasses] = useState([]);
@@ -65,10 +66,22 @@ function Products() {
                   ${item.price}
                 </p>
 
-                {/* BUTTON */}
-                <button className="mt-4 w-full bg-blue-500 hover:bg-blue-600 py-2 rounded-lg font-medium transition transform hover:scale-105">
-                  View Details
-                </button>
+                {/* BUTTONS */}
+                <div className="mt-4 flex gap-3">
+
+                  {/* VIEW BUTTON */}
+                  <button className="w-1/2 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-sm transition">
+                    View
+                  </button>
+
+                  {/* TRY ON BUTTON 🔥 */}
+                  <Link to={`/try-on/${item.id}`} className="w-1/2">
+                    <button className="w-full bg-blue-500 hover:bg-blue-600 py-2 rounded-lg text-sm font-medium transition transform hover:scale-105">
+                      Try On 😎
+                    </button>
+                  </Link>
+
+                </div>
 
               </div>
 
