@@ -102,9 +102,62 @@ app.get("/glasses/:id", (req, res) => {
   });
 });
 
+// delete API
+app.delete("/delete-glass/:id", (req, res) => {
+  const id = req.params.id;
+
+  db.query("DELETE FROM glasses WHERE id = ?", [id], (err) => {
+    if (err) return res.send(err);
+    res.send("Deleted successfully");
+  });
+});
+
+//update API
+app.put("/update-glass/:id", (req, res) => {
+  const id = req.params.id;
+  const { name, price, description, image } = req.body;
+
+  let sql;
+  let values;
+
+  // If new image is provided
+  if (image) {
+    sql = `
+      UPDATE glasses 
+      SET name=?, price=?, description=?, image=? 
+      WHERE id=?
+    `;
+    values = [name, price, description, image, id];
+  } else {
+    sql = `
+      UPDATE glasses 
+      SET name=?, price=?, description=? 
+      WHERE id=?
+    `;
+    values = [name, price, description, id];
+  }
+
+  db.query(sql, values, (err) => {
+    if (err) return res.send(err);
+    res.send("Updated successfully");
+  });
+});
+
+app.get("/glasses/:id", (req, res) => {
+  const id = req.params.id;
+
+  db.query("SELECT * FROM glasses WHERE id = ?", [id], (err, result) => {
+    if (err) return res.send(err);
+    res.json(result[0]);
+  });
+});
+
+
+
+
 // ----------------------------
 // START SERVER
 // ----------------------------
 app.listen(5000, () => {
-  console.log("🚀 Node server running on port 5000");
+  console.log(" Node server running on port 5000");
 });
