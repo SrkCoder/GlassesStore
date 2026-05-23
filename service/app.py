@@ -161,6 +161,19 @@ def try_glasses(glass_id):
     def generate():
         global cap, streaming
 
+        # 🛡️ SMOOTHING STATE FOR STABILIZATION
+        smooth_x = None
+        smooth_y = None
+        smooth_w = None
+        smooth_h = None
+        smooth_angle = None
+
+        ALPHA = 0.35  # Smoothing factor (balance between response speed and jitter elimination)
+        
+        last_valid_state = None
+        frames_without_detection = 0
+        MAX_LOST_FRAMES = 5  # Allow up to 5 consecutive frames of tracking failure without flickering
+
         try:
             while streaming:
                 success, frame = cap.read()
@@ -170,8 +183,12 @@ def try_glasses(glass_id):
                 rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 results = face_mesh.process(rgb)
 
+                detected = False
+
                 if results.multi_face_landmarks:
                     for face in results.multi_face_landmarks:
+                        detected = True
+                        frames_without_detection = 0
 
                         h, w, _ = frame.shape
 
@@ -185,27 +202,59 @@ def try_glasses(glass_id):
                             int(face.landmark[263].y * h)
                         ])
 
-                        nose = np.array([
-                            int(face.landmark[6].x * w),
-                            int(face.landmark[6].y * h)
-                        ])
+                        eye_center = (left_eye + right_eye) / 2
 
                         dist = int(np.linalg.norm(left_eye - right_eye))
 
                         gw = int(dist * 2.2)
                         gh = int(gw * 0.6)
 
-                        x = int(nose[0] - gw // 2)
-                        y = int(nose[1] - gh // 2)
+                        x = int(eye_center[0] - gw // 2)
+                        y = int(eye_center[1] - gh // 2 + int(gh * 0.12))
 
-                        angle = np.degrees(np.arctan2(
+                        # Negated angle to correct for Y-down coordinates relative to OpenCV's rotation direction
+                        angle = -np.degrees(np.arctan2(
                             right_eye[1] - left_eye[1],
                             right_eye[0] - left_eye[0]
                         ))
 
+                        # Apply Exponential Moving Average (EMA) smoothing
+                        if smooth_x is None:
+                            smooth_x = x
+                            smooth_y = y
+                            smooth_w = gw
+                            smooth_h = gh
+                            smooth_angle = angle
+                        else:
+                            smooth_x = int(ALPHA * x + (1 - ALPHA) * smooth_x)
+                            smooth_y = int(ALPHA * y + (1 - ALPHA) * smooth_y)
+                            smooth_w = int(ALPHA * gw + (1 - ALPHA) * smooth_w)
+                            smooth_h = int(ALPHA * gh + (1 - ALPHA) * smooth_h)
+                            smooth_angle = ALPHA * angle + (1 - ALPHA) * smooth_angle
+
+                        last_valid_state = (smooth_x, smooth_y, smooth_w, smooth_h, smooth_angle)
+
                         frame = overlay_transparent(
-                            frame, glasses_img, x, y, gw, gh, angle
+                            frame, glasses_img, smooth_x, smooth_y, smooth_w, smooth_h, smooth_angle
                         )
+                        break  # Process only the primary face
+
+                if not detected:
+                    frames_without_detection += 1
+                    if last_valid_state is not None and frames_without_detection <= MAX_LOST_FRAMES:
+                        # Draw at last known smoothed state to prevent flicker
+                        sx, sy, sw, sh, sa = last_valid_state
+                        frame = overlay_transparent(
+                            frame, glasses_img, sx, sy, sw, sh, sa
+                        )
+                    else:
+                        # Clear tracking state if face is lost for too long
+                        smooth_x = None
+                        smooth_y = None
+                        smooth_w = None
+                        smooth_h = None
+                        smooth_angle = None
+                        last_valid_state = None
 
                 _, buffer = cv2.imencode(".jpg", frame)
 
