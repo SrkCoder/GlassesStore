@@ -70,9 +70,11 @@ function Products() {
                 <div className="mt-4 flex gap-3">
 
                   {/* VIEW BUTTON */}
-                  <button className="w-1/2 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-sm transition">
-                    View
-                  </button>
+                  <Link to={`/product/${item.id}`} className="w-1/2">
+                    <button className="w-full bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-sm transition">
+                      View
+                    </button>
+                  </Link>
 
                   {/* TRY ON BUTTON 🔥 */}
                   <Link to={`/try-on/${item.id}`} className="w-1/2">

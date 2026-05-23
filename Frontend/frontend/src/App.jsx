@@ -5,6 +5,7 @@ import Admin from "./pages/Admin";
 import AddProduct from "./pages/AddProduct";
 import TryOn from "./pages/TryOn";
 import EditProduct from "./pages/EditProduct"; // ✅ NEW
+import ProductDetails from "./pages/ProductDetails"; // ✅ NEW
 import Navbar from "./components/Navbar";
 
 function App() {
@@ -16,6 +17,9 @@ function App() {
         <Route path="/products" element={<Products />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/add-product" element={<AddProduct />} />
+
+        {/* DETAILS */}
+        <Route path="/product/:id" element={<ProductDetails />} />
 
         {/* TRY-ON */}
         <Route path="/try-on/:id" element={<TryOn />} />

@@ -7,11 +7,19 @@ function TryOn() {
 
   const [streamUrl, setStreamUrl] = useState("");
   const [showPicker, setShowPicker] = useState(false);
+  const [glassesList, setGlassesList] = useState([]);
 
   useEffect(() => {
     setStreamUrl(`http://localhost:8000/try-glasses/${id}`);
     return () => setStreamUrl("");
   }, [id]);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/glasses")
+      .then((res) => res.json())
+      .then((data) => setGlassesList(data))
+      .catch((err) => console.error("Error fetching glasses list:", err));
+  }, []);
 
   const handleColorChange = async (color) => {
     await fetch("http://localhost:8000/set-color", {
@@ -23,6 +31,15 @@ function TryOn() {
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
+        }
+      `}</style>
 
       {/* TOP BAR */}
       <div className="p-4 flex justify-between items-center border-b border-white/10">
@@ -37,20 +54,52 @@ function TryOn() {
       </div>
 
       {/* MAIN */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-6">
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 py-6">
 
         {/* CAMERA */}
         {streamUrl && (
           <img
             src={streamUrl}
-            className="w-[700px] rounded-2xl shadow-2xl border border-white/10"
+            className="w-[700px] max-w-[90%] rounded-2xl shadow-2xl border border-white/10"
+            alt="Virtual Try-On Stream"
           />
+        )}
+
+        {/* 🕶️ HORIZONTAL GLASSES CAROUSEL */}
+        {glassesList.length > 0 && (
+          <div className="w-full max-w-[700px] flex flex-col items-center px-4">
+            <p className="text-sm font-semibold text-gray-400 mb-3 tracking-wide">
+              Select Glass Frame
+            </p>
+            <div className="flex gap-4 overflow-x-auto w-full pb-3 px-2 no-scrollbar justify-start md:justify-center">
+              {glassesList.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => navigate(`/try-on/${item.id}`)}
+                  className={`flex-shrink-0 w-24 h-24 rounded-2xl cursor-pointer overflow-hidden border-2 transition duration-300 flex flex-col items-center justify-center p-2 bg-white/5 backdrop-blur-md ${
+                    item.id.toString() === id.toString()
+                      ? "border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)] scale-105"
+                      : "border-white/10 hover:border-white/30 hover:scale-105"
+                  }`}
+                >
+                  <img
+                    src={`http://localhost:5000/uploads/${item.image}`}
+                    alt={item.name}
+                    className="h-12 w-full object-contain"
+                  />
+                  <span className="text-[10px] text-gray-300 mt-2 text-center font-semibold truncate w-full">
+                    {item.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* ----------------------------
             🎨 BEAUTIFUL COLOR PICKER
         ---------------------------- */}
-        <div className="relative flex flex-col items-center">
+        <div className="relative flex flex-col items-center mt-4">
 
           {/* MAIN COLOR BUTTON */}
           <button
